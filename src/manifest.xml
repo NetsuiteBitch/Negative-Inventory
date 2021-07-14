@@ -1,0 +1,20 @@
+<manifest projecttype="ACCOUNTCUSTOMIZATION">
+  <projectname>Negative Inventory</projectname>
+  <frameworkversion>1.0</frameworkversion>
+  <dependencies>
+    <features>
+      <feature required="true">SERVERSIDESCRIPTING</feature>
+      <feature required="false">CRM</feature>
+      <feature required="false">CREATESUITEBUNDLES</feature>
+    </features>
+    <objects>
+      <object>custitem_atlas_item_planner</object>
+      <object>custitem_sswms_palletqty</object>
+      <object>customrecord_og_brand</object>
+      <object>custitem_og_brand_field</object>
+      <object>customrecord_atlas_item_planner</object>
+      <object>customrecord_og_pack_size</object>
+      <object>custitem_og_pack_size_field</object>
+    </objects>
+  </dependencies>
+</manifest>
