@@ -123,6 +123,58 @@ define(['N/record','N/query'],
         }
 
 
-        return {voidtransferpid:voidtransferpid,voidtransfer:voidtransfer,createtransferdelete:createtransferdelete,getitemidfromname:getitemidfromname}
+        function getformulafromwo(woname){
+            var woquery = `
+            SELECT Transactionline.item
+            from
+            Transaction INNER JOIN
+            Transactionline
+            ON
+            Transaction.id = Transactionline.transaction
+
+            INNER JOIN ITEM ON transactionline.item = item.id
+
+
+            Where transaction.tranid = ${woname}
+            and transactionline.mainline = 'F'
+            And Item.itemtype = 'Assembly'
+            `
+            var result = query.runSuiteQL(woquery).results[0].values[0]
+            return result
+        }
+
+        function getformulafactor(woname){
+            var woquery = `
+            SELECT  -1*(Transactionline.quantity/tr.quantity), 
+            from 
+            Transaction INNER JOIN 
+            Transactionline 
+            ON 
+            Transaction.id = Transactionline.transaction 
+
+            INNER JOIN ITEM ON transactionline.item = item.id
+
+            inner join (
+             SELECT Transactionline.quantity
+            from 
+            Transaction INNER JOIN 
+            Transactionline 
+            ON 
+            Transaction.id = Transactionline.transaction 
+
+            INNER JOIN ITEM ON transactionline.item = item.id
+            where transactionline.mainline = 'T' and transaction.tranid = 'WO370') as tr on 1=1
+
+
+            Where transaction.tranid = ${woname}
+            and transactionline.mainline = 'F'
+            And Item.itemtype = 'Assembly'
+            `
+            var result = query.runSuiteQL(woquery).results[0].values[0]
+            return result
+        }
+
+
+        return {voidtransferpid:voidtransferpid,voidtransfer:voidtransfer,createtransferdelete:createtransferdelete,getitemidfromname:getitemidfromname,getformulafromwo:getformulafromwo, getformulafactor:getformulafactor}
 
     });

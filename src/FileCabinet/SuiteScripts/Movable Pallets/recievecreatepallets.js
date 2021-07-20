@@ -28,6 +28,15 @@ define(['N/query','./negativeutil'],
                 frombin:frombin,
                 tobin:tobin
             })
+
+            // const formulaid = negativeutil.getformulafromwo(requestParams.wo)
+            // const formulafactor = negativeutil.getformulafactor(requestParams.wo)
+            // const formulafrombin = 2723
+            // const formulatobin = 2717
+            //
+            // negativeutil.createtransferdelete(formulaid,requestParams.quantity*formulafactor,"", requestParams.wo+"MIX","",{
+            //     frombin:formulafrombin,tobin:formulatobin
+            // })
         }
 
         /**

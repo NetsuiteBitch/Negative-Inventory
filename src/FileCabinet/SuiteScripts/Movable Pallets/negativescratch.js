@@ -16,10 +16,19 @@ define(['N/record','./negativeutil'],
          */
         const execute = (scriptContext) => {
 
-                 // nutil.createtransferdelete(1402, "43", new Date('12/12/2029'), "testconsumption",'testpid',{tobin:2716,frombin:2722})
-            nutil.voidtransferpid('yowhatup')
+            var requestParams = {
+                quantity:100,
+                wo: 'WO370'
+            }
 
+            const formulaid = negativeutil.getformulafromwo(requestParams.wo)
+            const formulafactor = negativeutil.getformulafactor(requestParams.wo)
+            const formulafrombin = 2723
+            const formulatobin = 2717
 
+            negativeutil.createtransferdelete(formulaid,requestParams.quantity*formulafactor,"", requestParams.wo+"MIX","",{
+                frombin:formulafrombin,tobin:formulatobin
+            })
 
         }
 
