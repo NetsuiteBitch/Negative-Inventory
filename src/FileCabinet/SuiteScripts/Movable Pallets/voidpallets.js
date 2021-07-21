@@ -2,7 +2,7 @@
  * @NApiVersion 2.1
  * @NScriptType Restlet
  */
-define(['N/query','./negativeutil'],
+define(['N/query','./negativeutil','N/error'],
     /**
  * @param{query} query
  */
@@ -30,7 +30,26 @@ define(['N/query','./negativeutil'],
             //     tobin:tobin
             // })
 
-            negativeutil.voidtransferpid(requestParams.pid)
+
+            log.debug('requested delete of', requestParams.pid)
+            var thequery = `
+            SELECT Transaction.id from Transaction where Transaction.custbody_cc_palletid = '${requestParams.pid}'
+            `
+            var results = query.runSuiteQL(thequery).asMappedResults()
+
+            if(!results.length){
+                log.debug('missing')
+                var missingerror = {
+                    title: "PALLET_MISSING",
+                    message: "This pallet is not in the system"
+                }
+                return JSON.stringify(missingerror)
+            }
+
+            results.map((x) => record.delete({
+                type: record.Type.BIN_TRANSFER,
+                id: x.id
+            }))
         }
 
         /**

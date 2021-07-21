@@ -121,7 +121,7 @@ define(['N/record','N/query'],
             for(const i of itarr){
                 newrec.selectNewLine('inventory')
                 newrec.setCurrentSublistValue('inventory','item',i.item)
-                newrec.setCurrentSublistValue('inventory','adjustqtyby',i.totalquantity)
+                newrec.setCurrentSublistValue('inventory','adjustqtyby',i.totalquantity*1000)
                 newrec.setCurrentSublistValue('inventory','location',5)
                 var linesubrec = newrec.getCurrentSublistSubrecord({sublistId: 'inventory', fieldId: 'inventorydetail'});
                 for(const j of i.subs){
@@ -130,7 +130,7 @@ define(['N/record','N/query'],
                     linesubrec.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'binnumber', value: j.bin});
                     linesubrec.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'inventorystatus', value: 1});
                     linesubrec.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'expirationdate', value: j.expiration});
-                    linesubrec.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'quantity', value: j.subquantity});
+                    linesubrec.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'quantity', value: j.subquantity*1000});
                     linesubrec.commitLine({sublistId:'inventoryassignment'})
                 }
                 newrec.commitLine({sublistId: 'inventory'})
