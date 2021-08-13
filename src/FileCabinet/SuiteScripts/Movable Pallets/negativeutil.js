@@ -1,11 +1,19 @@
 /**
  * @NApiVersion 2.1
  */
-define(['N/record','N/query'],
+
+
+const consumptionbin = 2716
+const mainlocation = 5
+const adjaccount = 1238
+const subsidiary = 2
+const defaultstatus = 1
+
+define(['N/record', 'N/query'],
     /**
- * @param{record} record
- */
-    (record,query) => {
+     * @param{record} record
+     */
+    (record, query) => {
 
         /**
          * Defines the Scheduled script trigger point.
@@ -15,10 +23,10 @@ define(['N/record','N/query'],
          */
 
 
-        function createtransferdelete(itemid,quantity,expirationdate,lotnumber,pid,defaults){
-            expirationdate.setDate(expirationdate.getDate()+1)
-            var initialadjusment = createinventoryadjustment(itemid,quantity,expirationdate,lotnumber,defaults.frombin)
-            createbintransfer(itemid,quantity,defaults.frombin,defaults.tobin,lotnumber,pid)
+        function createtransferdelete(itemid, quantity, expirationdate, lotnumber, pid, defaults) {
+            expirationdate.setDate(expirationdate.getDate() + 1)
+            var initialadjusment = createinventoryadjustment(itemid, quantity, expirationdate, lotnumber, defaults.frombin)
+            createbintransfer(itemid, quantity, defaults.frombin, defaults.tobin, lotnumber, pid)
             record.delete({
                 type: record.Type.INVENTORY_ADJUSTMENT,
                 id: initialadjusment
@@ -27,13 +35,13 @@ define(['N/record','N/query'],
         }
 
 
-        function voidtransfer(itemid,quantity,expirationdate,lotnumber,defaults){
+        function voidtransfer(itemid, quantity, expirationdate, lotnumber, defaults) {
 
-            createbintransfer(itemid,quantity,defaults.tobin,defaults.frombin,lotnumber)
+            createbintransfer(itemid, quantity, defaults.tobin, defaults.frombin, lotnumber)
 
         }
 
-        function voidtransferpid(pid){
+        function voidtransferpid(pid) {
 
             var thequery = `
             SELECT Transaction.id from Transaction where Transaction.custbody_cc_palletid = '${pid}'
@@ -45,45 +53,148 @@ define(['N/record','N/query'],
             })
         }
 
+        function checkoredittempadjustment(itemid, quantity,expirationdate, lottext, binid, woid) {
+            var theQuery = `
+            SELECT
+              transaction.id as iaid
+            FROM
+              transaction
+            WHERE
+              transaction.custbody_tempwo = ${woid}
+            `
+            var iaid = query.runSuiteQL(theQuery).asMappedResults()[0]?.iaid
+            log.debug(iaid)
+            if (iaid) {
+                changefirstlineofadjustment(iaid, lottext, quantity)
+            } else {
+                createinventoryadjustment(itemid, quantity, expirationdate,lottext, binid, woid)
+            }
+        }
 
-        function createinventoryadjustment(itemid,quantity,expirationdate,lottext,binid){
+
+        function createinventoryadjustment(itemid, quantity, expirationdate, lottext, binid, woid) {
             var obj = record.create({
                 type: record.Type.INVENTORY_ADJUSTMENT,
-                isDynamic: true
+                isDynamic: true,
+                defaultValues: {'customform': 230}
             });
-            obj.setValue({fieldId: 'subsidiary', value: 2});
-            obj.setValue({fieldId: 'adjlocation', value: 5});
-            obj.setValue({fieldId: 'account', value: 1238});
+
+            obj.setValue({fieldId: 'subsidiary', value: subsidiary});
+            obj.setValue({fieldId: 'adjlocation', value: mainlocation});
+            obj.setValue({fieldId: 'account', value: adjaccount});
+            obj.setValue({fieldId: 'custbody_tempwo', value: woid})
 
             obj.selectNewLine({sublistId: 'inventory'});
-            obj.setCurrentSublistValue({sublistId: 'inventory', fieldId: 'item', value: itemid});
 
-            obj.setCurrentSublistValue({sublistId: 'inventory', fieldId: 'adjustqtyby', value: 100000});
-            obj.setCurrentSublistValue({sublistId: 'inventory', fieldId: 'location', value: 5});
+            obj.setCurrentSublistValue({sublistId: 'inventory', fieldId: 'item', value: itemid});
+            obj.setCurrentSublistValue({sublistId: 'inventory', fieldId: 'adjustqtyby', value: quantity});
+            obj.setCurrentSublistValue({sublistId: 'inventory', fieldId: 'location', value: mainlocation});
 
             var x = obj.getCurrentSublistSubrecord({sublistId: 'inventory', fieldId: 'inventorydetail'});
 
             x.selectNewLine({sublistId: 'inventoryassignment'});
 
-            x.setCurrentSublistText({sublistId: 'inventoryassignment', fieldId: 'receiptinventorynumber', text: lottext});
-            // x.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'receiptinventorynumber', value: '8753'});
+            x.setCurrentSublistText({
+                sublistId: 'inventoryassignment',
+                fieldId: 'receiptinventorynumber',
+                text: lottext
+            });
             x.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'binnumber', value: binid});
             x.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'inventorystatus', value: 1});
-            x.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'expirationdate', value: expirationdate});
-            x.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'quantity', value: 100000});
+            x.setCurrentSublistValue({
+                sublistId: 'inventoryassignment',
+                fieldId: 'expirationdate',
+                value: expirationdate
+            });
+            x.setCurrentSublistValue({sublistId: 'inventoryassignment', fieldId: 'quantity', value: quantity});
 
             x.commitLine({sublistId: 'inventoryassignment'});
 
             obj.commitLine({sublistId: 'inventory'});
 
             return obj.save();
+        }
 
+        function changefirstlineofadjustment(iaid, lot, qty) {
+            var rec = record.load({
+                type: record.Type.INVENTORY_ADJUSTMENT,
+                id: iaid
+            })
+
+            var currentqty = rec.getSublistValue({fieldId: 'adjustqtyby', sublistId: 'inventory', line: 0})
+
+            if (currentqty + qty == 0) {
+                record.delete({
+                    type: record.Type.INVENTORY_ADJUSTMENT,
+                    id: iaid
+                })
+                return
+            }
+
+            rec.setSublistValue({fieldId: 'adjustqtyby', sublistId: 'inventory', line: 0, value: currentqty + qty})
+
+            var ideets = rec.getSublistSubrecord({sublistId: 'inventory', fieldId: 'inventorydetail', line: 0})
+
+            for (var j = 0; j < ideets.getLineCount('inventoryassignment'); j++) {
+                var oldlotnumber = ideets.getSublistValue({
+                    sublistId: 'inventoryassignment',
+                    fieldId: 'receiptinventorynumber',
+                    line: j
+                })
+
+                if (oldlotnumber == lot) {
+                    var linequantity = ideets.getSublistValue({
+                        sublistId: 'inventoryassignment',
+                        fieldId: 'quantity',
+                        line: j
+
+                    })
+                    log.debug(typeof linequantity, typeof qty)
+
+                    var newquantity = linequantity + qty
+
+                    if (newquantity == 0) {
+                        ideets.removeLine({
+                            sublistId: 'inventoryassignment',
+                            line: j
+                        })
+                        log.debug('deleting line', lot)
+                        rec.save()
+                        return;
+                    }
+
+                    ideets.setSublistValue({
+                        sublistId: 'inventoryassignment',
+                        fieldId: 'quantity',
+                        line: j,
+                        value: newquantity
+                    })
+
+                    rec.save()
+                    return
+                }
+            }
+            ideets.insertLine({sublistId: 'inventoryassignment', line: 0});
+            ideets.setSublistText({
+                sublistId: 'inventoryassignment',
+                fieldId: 'receiptinventorynumber',
+                text: lot,
+                line: 0
+            });
+            ideets.setSublistValue({sublistId: 'inventoryassignment', fieldId: 'binnumber', value: consumptionbin, line: 0});
+            ideets.setSublistValue({sublistId: 'inventoryassignment', fieldId: 'inventorystatus', value: defaultstatus, line: 0});
+            ideets.setSublistValue({
+                sublistId: 'inventoryassignment',
+                fieldId: 'expirationdate',
+                value: new Date(),
+                line: 0
+            });
+            ideets.setSublistValue({sublistId: 'inventoryassignment', fieldId: 'quantity', value: qty, line: 0});
+            rec.save()
         }
 
 
-
-
-        function createbintransfer(itemid,quantity,binid,tobinid,lottext,pid){
+        function createbintransfer(itemid, quantity, binid, tobinid, lottext, pid) {
 
             var obj = record.create({
                 type: record.Type.BIN_TRANSFER,
@@ -115,7 +226,7 @@ define(['N/record','N/query'],
             var recID = obj.save();
         }
 
-        function getitemidfromname(itemname){
+        function getitemidfromname(itemname) {
 
             var thequery = `Select item.id from item where item.itemid = '${itemname}'`
 
@@ -123,7 +234,7 @@ define(['N/record','N/query'],
         }
 
 
-        function getformulafromwo(woname){
+        function getformulafromwo(woname) {
             var woquery = `
             SELECT Transactionline.item
             from
@@ -143,7 +254,7 @@ define(['N/record','N/query'],
             return result
         }
 
-        function getformulafactor(woname){
+        function getformulafactor(woname) {
             var woquery = `
             SELECT  -1*(Transactionline.quantity/tr.quantity), 
             from 
@@ -175,6 +286,16 @@ define(['N/record','N/query'],
         }
 
 
-        return {voidtransferpid:voidtransferpid,voidtransfer:voidtransfer,createtransferdelete:createtransferdelete,getitemidfromname:getitemidfromname,getformulafromwo:getformulafromwo, getformulafactor:getformulafactor}
+        return {
+            voidtransferpid: voidtransferpid,
+            voidtransfer: voidtransfer,
+            createtransferdelete: createtransferdelete,
+            getitemidfromname: getitemidfromname,
+            getformulafromwo: getformulafromwo,
+            getformulafactor: getformulafactor,
+            createinventoryadjustment: createinventoryadjustment,
+            changefirstlineofadjustment: changefirstlineofadjustment,
+            checkoredittempadjustment:checkoredittempadjustment
+        }
 
     });

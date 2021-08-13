@@ -28,7 +28,13 @@ define(['N/record','./negativeutil'],
                     }
                 ]
 
-        negativeutil.createtransferdelete(args[0],args[1],new Date(args[2]), args[3],args[4],args[5])
+            negativeutil.checkoredittempadjustment('1402',12,new Date('04/04/2029'),'1',1276,144698)
+            negativeutil.checkoredittempadjustment('1402',13,new Date('04/04/2029'),'2',1276,144698)
+            negativeutil.checkoredittempadjustment('1402',1,new Date('04/04/2029'),'1',1276,144698)
+            negativeutil.checkoredittempadjustment('1402',23,new Date('04/04/2029'),'3',1276,144698)
+        }
+
+        function changeadjustment(){
 
         }
 

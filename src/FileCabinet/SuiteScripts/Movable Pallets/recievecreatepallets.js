@@ -2,6 +2,10 @@
  * @NApiVersion 2.1
  * @NScriptType Restlet
  */
+const tobin = 2716
+const frombin = 2722
+const consumptionbin = 2722
+
 define(['N/query','./negativeutil'],
     /**
  * @param{query} query
@@ -19,15 +23,17 @@ define(['N/query','./negativeutil'],
             log.debug('requested with',requestParams)
             var expirationdate = new Date(requestParams.expirationdate*1000)
             const itemid = negativeutil.getitemidfromname(requestParams.item)
-            const tobin = 2716
-            const frombin = 2722
-
             log.debug('args',[itemid,requestParams.quantity,expirationdate,requestParams.lot,requestParams.pid, { frombin:frombin, tobin:tobin}])
 
             negativeutil.createtransferdelete(itemid,requestParams.quantity,expirationdate,requestParams.lot,requestParams.pid, {
                 frombin:frombin,
                 tobin:tobin
             })
+
+            var wonum = requestParams.pid.substring(0,requestParams.pid.length)
+            var woid = query.runSuiteQL(`SELECT Transaction.id from transaction where transaction.tranid = '${wonum}'`)
+
+            negativeutil.checkoredittempadjustment('1402',12,new Date('04/04/2029'),'1',consumptionbin,woid)
 
         }
 
