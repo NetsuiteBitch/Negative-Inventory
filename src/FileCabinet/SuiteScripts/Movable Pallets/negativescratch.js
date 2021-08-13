@@ -6,7 +6,7 @@ define(['N/record','./negativeutil'],
     /**
  * @param{record} record
  */
-    (record,nutil) => {
+    (record, negativeutil) => {
 
         /**
          * Defines the Scheduled script trigger point.
@@ -16,19 +16,19 @@ define(['N/record','./negativeutil'],
          */
         const execute = (scriptContext) => {
 
-            var requestParams = {
-                quantity:100,
-                wo: 'WO370'
-            }
+         const  args = [
+                1368,
+                    "97",
+                    "2023-02-01T00:00:00.000Z",
+                    "21321",
+                    "WO433045",
+                    {
+                        frombin: 2722,
+                        tobin: 2716
+                    }
+                ]
 
-            const formulaid = negativeutil.getformulafromwo(requestParams.wo)
-            const formulafactor = negativeutil.getformulafactor(requestParams.wo)
-            const formulafrombin = 2723
-            const formulatobin = 2717
-
-            negativeutil.createtransferdelete(formulaid,requestParams.quantity*formulafactor,"", requestParams.wo+"MIX","",{
-                frombin:formulafrombin,tobin:formulatobin
-            })
+        negativeutil.createtransferdelete(args[0],args[1],new Date(args[2]), args[3],args[4],args[5])
 
         }
 
