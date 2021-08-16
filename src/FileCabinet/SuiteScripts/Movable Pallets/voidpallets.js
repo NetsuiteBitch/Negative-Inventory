@@ -16,6 +16,9 @@ define(['N/query','./negativeutil','N/error'],
          * @since 2015.2
          */
         const get = (requestParams) => {
+            var wonum = requestParams.pid.substring(0,requestParams.pid.length-3)
+            var iaid = query.runSuiteQL(`Select transaction.id as iaid from transaction where BUILTIN.DF(transaction.custbody_tempwo) like '%${wonum}'`).asMappedResults()[0].iaid
+            negativeutil.changefirstlineofadjustment(iaid,requestParams.lot, requestParams.quantity)
             // log.debug('lot',requestParams.lot)
             // log.debug('quantity',requestParams.quantity)
             // log.debug('item',requestParams.item)

@@ -3,14 +3,14 @@
  * @NScriptType Restlet
  */
 const tobin = 2716
-const frombin = 2722
-const consumptionbin = 2722
+const frombin = 2716
+const consumptionbin = 2716
 
-define(['N/query','./negativeutil'],
+define(['N/query','N/record','./negativeutil'],
     /**
  * @param{query} query
  */
-    (query, negativeutil) => {
+    (query, record,negativeutil) => {
         /**
          * Defines the function that is executed when a GET request is sent to a RESTlet.
          * @param {Object} requestParams - Parameters from HTTP request URL; parameters passed as an Object (for all supported
@@ -20,21 +20,23 @@ define(['N/query','./negativeutil'],
          * @since 2015.2
          */
         const get = (requestParams) => {
-            log.debug('requested with',requestParams)
-            var expirationdate = new Date(requestParams.expirationdate*1000)
+            log.debug('Yolo')
+            const expirationdate = new Date(requestParams.expirationdate*1000)
             const itemid = negativeutil.getitemidfromname(requestParams.item)
+            const wonum = requestParams.pid.substring(0,requestParams.pid.length-3)
+            const woidquery = query.runSuiteQL(`SELECT Transaction.id as woid from transaction where transaction.tranid LIKE '%${wonum}'`).asMappedResults()
+            if(!woidquery[0]){
+                return "Work Order Not Found!"
+            }
+            const woid = woidquery[0].woid
+
+            const quantity = parseInt(requestParams.quantity, 10)
+            log.debug('requested with',requestParams)
             log.debug('args',[itemid,requestParams.quantity,expirationdate,requestParams.lot,requestParams.pid, { frombin:frombin, tobin:tobin}])
-
-            negativeutil.createtransferdelete(itemid,requestParams.quantity,expirationdate,requestParams.lot,requestParams.pid, {
-                frombin:frombin,
-                tobin:tobin
-            })
-
-            var wonum = requestParams.pid.substring(0,requestParams.pid.length)
-            var woid = query.runSuiteQL(`SELECT Transaction.id from transaction where transaction.tranid = '${wonum}'`)
-
-            negativeutil.checkoredittempadjustment('1402',12,new Date('04/04/2029'),'1',consumptionbin,woid)
-
+            log.debug('wonum',wonum)
+            log.debug('woid',woid)
+            var iaid = negativeutil.checkoredittempadjustment(itemid,quantity,expirationdate,requestParams.lot,consumptionbin,woid)
+            return "success"
         }
 
         /**

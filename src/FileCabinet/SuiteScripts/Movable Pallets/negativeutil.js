@@ -3,17 +3,17 @@
  */
 
 
-const consumptionbin = 2716
+const tconsumptionbin = 2716
 const mainlocation = 5
 const adjaccount = 1238
 const subsidiary = 2
 const defaultstatus = 1
 
-define(['N/record', 'N/query'],
+define(['N/record', 'N/query','N/ui/message'],
     /**
      * @param{record} record
      */
-    (record, query) => {
+    (record, query,message) => {
 
         /**
          * Defines the Scheduled script trigger point.
@@ -65,14 +65,18 @@ define(['N/record', 'N/query'],
             var iaid = query.runSuiteQL(theQuery).asMappedResults()[0]?.iaid
             log.debug(iaid)
             if (iaid) {
+                log.debug('ia found', 'changing')
                 changefirstlineofadjustment(iaid, lottext, quantity)
+                return iaid
             } else {
-                createinventoryadjustment(itemid, quantity, expirationdate,lottext, binid, woid)
+                return createinventoryadjustment(itemid, quantity, expirationdate,lottext, binid, woid)
             }
         }
 
 
         function createinventoryadjustment(itemid, quantity, expirationdate, lottext, binid, woid) {
+            // log.debug('in inventory function',woid)
+            log.debug('cia', [itemid, quantity, expirationdate, lottext, binid, woid])
             var obj = record.create({
                 type: record.Type.INVENTORY_ADJUSTMENT,
                 isDynamic: true,
@@ -82,7 +86,7 @@ define(['N/record', 'N/query'],
             obj.setValue({fieldId: 'subsidiary', value: subsidiary});
             obj.setValue({fieldId: 'adjlocation', value: mainlocation});
             obj.setValue({fieldId: 'account', value: adjaccount});
-            obj.setValue({fieldId: 'custbody_tempwo', value: woid})
+            obj.setValue({fieldId: 'custbody_tempwo', value: parseInt(woid, 10)})
 
             obj.selectNewLine({sublistId: 'inventory'});
 
@@ -116,6 +120,7 @@ define(['N/record', 'N/query'],
         }
 
         function changefirstlineofadjustment(iaid, lot, qty) {
+            log.debug('changinlineargs',[iaid,lot,qty])
             var rec = record.load({
                 type: record.Type.INVENTORY_ADJUSTMENT,
                 id: iaid
@@ -153,6 +158,15 @@ define(['N/record', 'N/query'],
 
                     var newquantity = linequantity + qty
 
+                    if(newquantity < 0){
+                        var msg = message.create({
+                            type: message.Type.WARNING,
+                            title: 'Pallet Tags Not Printed!'
+                        })
+                        msg.show()
+
+                        return -1
+                    }
                     if (newquantity == 0) {
                         ideets.removeLine({
                             sublistId: 'inventoryassignment',
@@ -181,7 +195,7 @@ define(['N/record', 'N/query'],
                 text: lot,
                 line: 0
             });
-            ideets.setSublistValue({sublistId: 'inventoryassignment', fieldId: 'binnumber', value: consumptionbin, line: 0});
+            ideets.setSublistValue({sublistId: 'inventoryassignment', fieldId: 'binnumber', value: tconsumptionbin, line: 0});
             ideets.setSublistValue({sublistId: 'inventoryassignment', fieldId: 'inventorystatus', value: defaultstatus, line: 0});
             ideets.setSublistValue({
                 sublistId: 'inventoryassignment',

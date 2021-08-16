@@ -6,10 +6,22 @@
       <feature required="true">SERVERSIDESCRIPTING</feature>
       <feature required="false">CRM</feature>
       <feature required="false">CREATESUITEBUNDLES</feature>
+      <feature required="false">ASSEMBLIES</feature>
+      <feature required="false">EXPREPORTS</feature>
+      <feature required="false">ADVRECEIVING</feature>
+      <feature required="false">MULTILOCINVT</feature>
+      <feature required="false">INVENTORY</feature>
+      <feature required="false">OPPORTUNITIES</feature>
+      <feature required="false">CUSTOMTRANSACTIONS</feature>
+      <feature required="false">RECEIVABLES</feature>
+      <feature required="false">ACCOUNTING</feature>
+      <feature required="false">WORKORDERS</feature>
+      <feature required="false">PAYABLES</feature>
     </features>
     <objects>
       <object>custitem_atlas_item_planner</object>
       <object>custitem_sswms_palletqty</object>
+      <object>customrole1108</object>
       <object>customrecord_og_brand</object>
       <object>custitem_og_brand_field</object>
       <object>customrecord_atlas_item_planner</object>
