@@ -148,6 +148,7 @@ define(['N/record', 'N/query','N/ui/message'],
                 })
 
                 if (oldlotnumber == lot) {
+                    log.debug("matched lot",lot)
                     var linequantity = ideets.getSublistValue({
                         sublistId: 'inventoryassignment',
                         fieldId: 'quantity',

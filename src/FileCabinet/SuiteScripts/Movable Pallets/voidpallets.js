@@ -18,41 +18,11 @@ define(['N/query','./negativeutil','N/error'],
         const get = (requestParams) => {
             var wonum = requestParams.pid.substring(0,requestParams.pid.length-3)
             var iaid = query.runSuiteQL(`Select transaction.id as iaid from transaction where BUILTIN.DF(transaction.custbody_tempwo) like '%${wonum}'`).asMappedResults()[0].iaid
-            negativeutil.changefirstlineofadjustment(iaid,requestParams.lot, requestParams.quantity)
-            // log.debug('lot',requestParams.lot)
-            // log.debug('quantity',requestParams.quantity)
-            // log.debug('item',requestParams.item)
-            // const itemid = negativeutil.getitemidfromname(requestParams.item)
-            // // log.debug('newitem',itemid)
-            // const tobin = 2716
-            // const frombin = 2722
-            // log.debug('params',[itemid,requestParams.quantity,new Date('12/12/2029'),requestParams.lot])
-
-            // negativeutil.voidtransfer(itemid,requestParams.quantity,requestParams.expirationdate,requestParams.lot,{
-            //     frombin:frombin,
-            //     tobin:tobin
-            // })
-
-
-            log.debug('requested delete of', requestParams.pid)
-            var thequery = `
-            SELECT Transaction.id from Transaction where Transaction.custbody_cc_palletid = '${requestParams.pid}'
-            `
-            var results = query.runSuiteQL(thequery).asMappedResults()
-
-            if(!results.length){
-                log.debug('missing')
-                var missingerror = {
-                    title: "PALLET_MISSING",
-                    message: "This pallet is not in the system"
-                }
-                return JSON.stringify(missingerror)
-            }
-
-            results.map((x) => record.delete({
-                type: record.Type.BIN_TRANSFER,
-                id: x.id
-            }))
+            log.debug('iaid',iaid)
+            log.debug('voidparams',requestParams)
+            log.debug('passed args',[iaid,requestParams.lot, requestParams.quantity])
+            negativeutil.changefirstlineofadjustment(iaid,requestParams.lot, -1*parseInt(requestParams.quantity,10))
+            return "Success"
         }
 
         /**

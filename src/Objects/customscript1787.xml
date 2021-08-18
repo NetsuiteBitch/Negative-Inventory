@@ -1,7 +1,7 @@
 <restlet scriptid="customscript1787">
   <description></description>
   <isinactive>F</isinactive>
-  <name>Create Move</name>
+  <name>Create Temp Adjustment</name>
   <notifyadmins>F</notifyadmins>
   <notifyemails></notifyemails>
   <notifyowner>T</notifyowner>
