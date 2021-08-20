@@ -6,11 +6,11 @@ const tobin = 2716
 const frombin = 2716
 const consumptionbin = 2716
 
-define(['N/query','N/record','./negativeutil'],
+define(['N/query','N/record','N/error','./negativeutil'],
     /**
  * @param{query} query
  */
-    (query, record,negativeutil) => {
+    (query, record,error,negativeutil) => {
         /**
          * Defines the function that is executed when a GET request is sent to a RESTlet.
          * @param {Object} requestParams - Parameters from HTTP request URL; parameters passed as an Object (for all supported
@@ -20,15 +20,37 @@ define(['N/query','N/record','./negativeutil'],
          * @since 2015.2
          */
         const get = (requestParams) => {
-            log.debug('Yolo')
+
+
+            if(!requestParams.pid){
+                return "Missing PID"
+            }
+            if(!requestParams.expirationdate){
+                return "Missing Expiration Date"
+            }
+            if(!requestParams.lot){
+                return "Missing Lot"
+            }
+            if(!requestParams.item){
+                return "Missing Item"
+            }
+            if(!requestParams.quantity){
+                return "Missing quantity"
+            }
+
             const expirationdate = new Date(requestParams.expirationdate*1000)
             const itemid = negativeutil.getitemidfromname(requestParams.item)
+            if(!itemid){
+                return "Invalid Item"
+            }
+
             const wonum = requestParams.pid.substring(0,requestParams.pid.length-3)
             const woidquery = query.runSuiteQL(`SELECT Transaction.id as woid from transaction where transaction.tranid LIKE '%${wonum}'`).asMappedResults()
             if(!woidquery[0]){
                 return "Work Order Not Found!"
             }
             const woid = woidquery[0].woid
+            log.debug('woid',woid)
 
             const quantity = parseInt(requestParams.quantity, 10)
             log.debug('requested with',requestParams)
@@ -36,7 +58,7 @@ define(['N/query','N/record','./negativeutil'],
             log.debug('wonum',wonum)
             log.debug('woid',woid)
             var iaid = negativeutil.checkoredittempadjustment(itemid,quantity,expirationdate,requestParams.lot,consumptionbin,woid)
-            return "success"
+            return "success" + "\niaid:" + iaid
         }
 
         /**

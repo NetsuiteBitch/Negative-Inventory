@@ -31,7 +31,7 @@ define(['N/error','N/query'],
         const beforeSubmit = (scriptContext) => {
             var rec = scriptContext.newRecord
             const itemlen = rec.getLineCount('component')
-
+            var reported = false
             for(var i=0;i<itemlen;i++){
                 const item = rec.getSublistValue({
                     sublistId:'component',
@@ -42,6 +42,16 @@ define(['N/error','N/query'],
                 const type = query.runSuiteQL(`
                 select item.itemtype from item where item.id = ${item}
                 `).asMappedResults()[0]['itemtype']
+
+                var rquantity = rec.getSublistValue({
+                    sublistId: 'component',
+                    fieldId: 'quantity',
+                    line:i
+                })
+
+                if(rquantity!=0){
+                    reported = true
+                }
 
                 if(type == 'Assembly'){
                     var quantity = rec.getSublistValue({
@@ -59,6 +69,15 @@ define(['N/error','N/query'],
 
                     }
                 }
+            }
+
+
+            if(!reported){
+                throw error.create({
+                    message:'No Consumption Reported',
+                    name:'CONSUMPTION_MISSING'
+                })
+
             }
         }
 

@@ -244,8 +244,9 @@ define(['N/record', 'N/query','N/ui/message'],
         function getitemidfromname(itemname) {
 
             var thequery = `Select item.id from item where item.itemid = '${itemname}'`
+            var result = query.runSuiteQL(thequery).asMappedResults()
 
-            return query.runSuiteQL(thequery).results[0].values[0]
+            return result[0]?.id
         }
 
 
